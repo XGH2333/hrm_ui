@@ -258,8 +258,7 @@ export default {
         current: this.table.pageConfig.current,
         size: this.table.pageConfig.size,
         name: this.searchForm.formData.name,
-        deptId: this.searchForm.formData.deptId,
-        month: this.searchForm.formData.month
+        deptId: this.searchForm.formData.deptId
       }).then(response => {
         if (response.code === 200) {
           this.table.tableData = response.data.list
