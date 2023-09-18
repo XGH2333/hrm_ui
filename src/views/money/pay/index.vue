@@ -126,29 +126,7 @@
         :header-cell-style="{background: '#eef1f6',color: '#606266',
         textAlign:'center',fontWeight:'bold',borderWidth:'3px'}"
       >
-        <el-table-column prop="code" label="工号" min-width="125" align="center"/>
-        <el-table-column prop="name" label="姓名" min-width="125" align="center"/>
-        <el-table-column prop="deptName" label="部门" min-width="125" align="center"/>
-        <el-table-column prop="phone" label="电话" min-width="125" align="center"/>
-        <el-table-column label="扣款项目">
-          <el-table-column prop="lateDeduct" label="迟到" min-width="125" align="center"/>
-          <el-table-column prop="leaveEarlyDeduct" label="早退" min-width="125" align="center"/>
-          <el-table-column prop="absenteeismDeduct" label="旷工" min-width="125" align="center"/>
-          <el-table-column prop="leaveDeduct" label="请假" min-width="125" align="center"/>
-        </el-table-column>
-        <el-table-column label="缴纳项目">
-          <el-table-column prop="housePay" label="公积金" min-width="125" align="center"/>
-          <el-table-column prop="socialPay" label="社保" min-width="125" align="center"/>
-        </el-table-column>
-        <el-table-column label="实发工资">
-          <el-table-column prop="baseSalary" label="基础工资" min-width="125" align="center"/>
-          <el-table-column prop="subsidy" label="生活补贴" min-width="125" align="center"/>
-          <el-table-column prop="bonus" label="奖金" min-width="125" align="center"/>
-        </el-table-column>
-        <el-table-column prop="totalSalary" label="最终工资" min-width="125" align="center"/>
-        <el-table-column prop="workDays" label="工作时长(天)" min-width="125" align="center"/>
-        <el-table-column prop="remark" label="备注" min-width="200" align="center"/>
-        <el-table-column label="工资发放进度" width="190" fixed="right" align="center">
+        <el-table-column label="工资发放进度" width="190" align="center">
           <el-table-column label="状态" width="100" align="center">
             <template
               slot-scope="scope">
@@ -173,6 +151,35 @@
             </template>
           </el-table-column>
         </el-table-column>
+        <el-table-column prop="code" label="工号" min-width="125" align="center"/>
+        <el-table-column prop="name" label="姓名" min-width="125" align="center"/>
+        <el-table-column prop="deptName" label="部门" min-width="125" align="center"/>
+        <el-table-column prop="phone" label="电话" min-width="125" align="center"/>
+        <el-table-column label="扣款项目">
+          <el-table-column prop="lateDeduct" label="迟到" min-width="125" align="center"/>
+          <el-table-column prop="leaveEarlyDeduct" label="早退" min-width="125" align="center"/>
+          <el-table-column prop="absenteeismDeduct" label="旷工" min-width="125" align="center"/>
+          <el-table-column prop="leaveDeduct" label="请假" min-width="125" align="center"/>
+        </el-table-column>
+        <el-table-column label="缴纳项目">
+          <el-table-column prop="housePay" label="公积金" min-width="125" align="center"/>
+          <el-table-column prop="socialPay" label="社保" min-width="125" align="center"/>
+        </el-table-column>
+        <el-table-column label="实发工资">
+          <el-table-column prop="baseSalary" label="基础工资" min-width="125" align="center"/>
+          <el-table-column prop="subsidy" label="生活补贴" min-width="125" align="center"/>
+          <el-table-column prop="bonus" label="奖金" min-width="125" align="center"/>
+        </el-table-column>
+        <el-table-column prop="totalSalary" label="最终工资" min-width="125" align="center"/>
+        <el-table-column prop="workDays" label="工作时长(天)" min-width="125" align="center"/>
+        <el-table-column prop="remark" label="备注" min-width="200" align="center"/>
+        <el-table-column label="操作" width="190" fixed="right" align="center">
+          <template slot-scope="scope">
+            <el-button :disabled="scope.row.stateId !== 0" size="mini" type="primary" @click="confirmSalary(scope.row)"
+            >确认工资<i class="el-icon-edit"></i
+            ></el-button>
+          </template>
+        </el-table-column>
       </el-table>
       <el-pagination
         class="pager"
@@ -188,7 +195,7 @@
   </div>
 </template>
 <script>
-import { getList } from '../../../api/salaryRecording'
+import {confirmSalaryRecording, createSalaryRecording, getList} from '../../../api/salaryRecording'
 import { mapState } from 'vuex'
 import { getAllDept } from '@/api/dept'
 
@@ -266,6 +273,17 @@ export default {
           this.month = response.data.month
         } else {
           this.$message.error(response.message)
+        }
+      })
+    },
+    confirmSalary (row) {
+      confirmSalaryRecording(row.id).then(response => {
+        if (response.code === 200) {
+          this.dialogForm.isShow = false
+          this.dialogForm.formData = {}
+          this.table.tableData.splice(this.table.tableData.indexOf(row), 1)
+        } else {
+          this.$message.error(response.msg)
         }
       })
     }
