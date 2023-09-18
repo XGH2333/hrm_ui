@@ -186,6 +186,7 @@
 </template>
 <script>
 import { getExportApi, getImportApi, getList, setSalary } from '../../../api/salary'
+import { confirmSalaryRecording} from '../../../api/salaryRecording'
 import { getInsuranceByStaffId } from '../../../api/insurance'
 import { mapState } from 'vuex'
 import { getAllDept } from '@/api/dept'
@@ -282,6 +283,15 @@ export default {
     confirmSalary (row) {
       //TODO
       //确认工资无误,考虑禁用明细按钮且发送数据到财务系统
+      confirmSalaryRecording(row.staffId).then(response => {
+        if (response.code === 200) {
+          this.dialogForm.isShow = false
+          this.dialogForm.formData = {}
+          this.table.tableData.splice(this.table.tableData.indexOf(row), 1)
+        } else {
+          this.$message.error(response.msg)
+        }
+      })
     },
     confirm () {
       this.$refs.dialogForm.validate(valid => {

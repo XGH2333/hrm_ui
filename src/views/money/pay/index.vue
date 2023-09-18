@@ -69,11 +69,6 @@
                     show-word-limit style="width:48%"/>
         </el-form-item>
       </el-form>
-
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogForm.isShow = false">取消</el-button>
-        <el-button type="primary" @click="confirm">确定</el-button>
-      </div>
     </el-dialog>
     <!--操作-->
     <div style="margin-bottom: 10px">
@@ -114,14 +109,6 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="月份" prop="month">
-          <el-date-picker
-            value-format='yyyyMM'
-            type="month"
-            placeholder='请选择月份'
-            v-model="searchForm.formData.month"
-          />
-        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="search" size="mini">搜索 <i class="el-icon-search"/></el-button>
           <el-button type="danger" @click="reset" size="mini">重置 <i class="el-icon-refresh-left"/></el-button>
@@ -159,13 +146,32 @@
           <el-table-column prop="bonus" label="奖金" min-width="125" align="center"/>
         </el-table-column>
         <el-table-column prop="totalSalary" label="最终工资" min-width="125" align="center"/>
+        <el-table-column prop="workDays" label="工作时长(天)" min-width="125" align="center"/>
         <el-table-column prop="remark" label="备注" min-width="200" align="center"/>
-        <el-table-column label="操作" width="190" fixed="right" align="center">
-          <template slot-scope="scope">
-            <el-button size="mini" type="primary" @click="handleEdit(scope.row)">
-              发放 <i class="el-icon-edit"></i
-            ></el-button>
-          </template>
+        <el-table-column label="工资发放进度" width="190" fixed="right" align="center">
+          <el-table-column label="状态" width="100" align="center">
+            <template
+              slot-scope="scope">
+              <div
+                :style="'color: '+(scope.row.stateId == 2?'#67C23A':'#F56C6C')+';font-size: 14px'"
+              >{{ scope.row.stateId == 0 ? "未确认" : (scope.row.stateId == 1 ? "未发放" : "已发放")}}</div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="serialNumber" label="流水号" width="100" align="center">
+            <template
+              slot-scope="scope">
+              <el-popover
+                placement="top"
+                width="200"
+                trigger="hover"
+                :content="scope.row.serialNumber"
+              >
+                <el-button slot="reference" type="text" size="small">
+                  {{(scope.row.stateId == 2? scope.row.serialNumber : "未发放")}}
+                </el-button>
+              </el-popover>
+            </template>
+          </el-table-column>
         </el-table-column>
       </el-table>
       <el-pagination
@@ -182,21 +188,13 @@
   </div>
 </template>
 <script>
-import {getExportApi, getImportApi, getList, setSalary} from '../../../api/salary'
-import {getInsuranceByStaffId} from '../../../api/insurance'
-import {mapState} from 'vuex'
-import {getAllDept} from '@/api/dept'
+import { getList } from '../../../api/salaryRecording'
+import { mapState } from 'vuex'
+import { getAllDept } from '@/api/dept'
 
 export default {
   name: 'Salary',
   data() {
-    const checkSalary = (rule, value, callback) => {
-      if (this.dialogForm.formData.totalSalary < 0) {
-        callback(new Error('最终工资至少应该大于0'))
-      } else {
-        callback()
-      }
-    }
     return {
       searchForm: {
         deptList: [],
@@ -204,13 +202,7 @@ export default {
       },
       dialogForm: {
         isShow: false,
-        formData: {},
-        rules: {
-          baseSalary: [
-            {required: true, message: '请输入基础工资', trigger: 'blur'},
-            {validator: checkSalary, trigger: 'blur'}
-          ]
-        }
+        formData: {}
       },
       table: {
         tableData: [],
@@ -228,71 +220,9 @@ export default {
     ...mapState('token', ['token']),
     headers() {
       return {token: this.token}
-    },
-    // 获取导入数据的接口
-    importApi() {
-      return getImportApi()
-    }
-  },
-  watch: {
-    'dialogForm.formData.baseSalary': function () {
-      this.calculateSalary()
-    },
-    'dialogForm.formData.subsidy': function () {
-      this.calculateSalary()
-    },
-    'dialogForm.formData.bonus': function () {
-      this.calculateSalary()
     }
   },
   methods: {
-    // 计算工资
-    calculateSalary() {
-      this.dialogForm.formData.totalSalary = this.dialogForm.formData.baseSalary +
-        this.dialogForm.formData.subsidy + this.dialogForm.formData.bonus -
-        this.insurance.perHousePay - this.insurance.perSocialPay - this.dialogForm.formData.lateDeduct -
-        this.dialogForm.formData.leaveEarlyDeduct -
-        this.dialogForm.formData.leaveDeduct - this.dialogForm.formData.absenteeismDeduct
-    },
-    handleEdit(row) {
-      getInsuranceByStaffId(row.staffId).then(response => {
-        if (response.code === 200) {
-          this.insurance = response.data
-          this.dialogForm.isShow = true
-          this.dialogForm.formData = {
-            staffId: row.staffId,
-            baseSalary: row.baseSalary,
-            subsidy: row.subsidy,
-            bonus: row.bonus,
-            month: this.month,
-            lateDeduct: row.lateDeduct,
-            leaveDeduct: row.leaveDeduct,
-            leaveEarlyDeduct: row.leaveEarlyDeduct,
-            absenteeismDeduct: row.absenteeismDeduct,
-            remark: row.remark
-          }
-        } else {
-          this.$message.error('请先为此员工设置社保！')
-        }
-      })
-    },
-    confirm() {
-      this.$refs.dialogForm.validate(valid => {
-        if (valid) {
-          setSalary(this.dialogForm.formData).then((response) => {
-            if (response.code === 200) {
-              this.$message.success('保存成功')
-              this.dialogForm.isShow = false
-              this.loading()
-            } else {
-              this.$message.error('保存失败')
-            }
-          })
-        } else {
-          return false
-        }
-      })
-    },
     handleSizeChange(size) {
       this.table.pageConfig.size = size
       this.loading()
@@ -339,18 +269,6 @@ export default {
           this.$message.error(response.message)
         }
       })
-    },
-    // 导出数据
-    exportData() {
-      window.open(getExportApi(this.month))
-    },
-    handleImportSuccess(response) {
-      if (response.code === 200) {
-        this.$message.success('数据导入成功！')
-        this.loading()
-      } else {
-        this.$message.error('数据导入失败！')
-      }
     }
   },
   created() {
