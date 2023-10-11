@@ -66,10 +66,10 @@ export const getOne = (id) => {
 
 // 数据导入
 export const getImportApi = () => {
-  return 'http://localhost:' + process.env.VUE_APP_PORT + url + '/import'
+  return 'http://8.134.84.37:' + process.env.VUE_APP_PORT + url + '/import'
 }
 
 // 数据导出
 export const getExportApi = () => {
-  return 'http://localhost:' + process.env.VUE_APP_PORT + url + '/export'
+  return 'http://8.134.84.37:' + process.env.VUE_APP_PORT + url + '/export'
 }
