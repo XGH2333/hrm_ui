@@ -186,7 +186,7 @@
 </template>
 <script>
 import { getExportApi, getImportApi, getList, setSalary } from '../../../api/salary'
-import { createSalaryRecording} from '../../../api/salaryRecording'
+import { createSalaryRecording } from '../../../api/salaryRecording'
 import { getInsuranceByStaffId } from '../../../api/insurance'
 import { mapState } from 'vuex'
 import { getAllDept } from '@/api/dept'
