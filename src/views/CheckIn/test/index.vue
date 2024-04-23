@@ -1,15 +1,21 @@
 <template>
   <div>
+    <div style="text-align: center;">
+      <span v-if="type !== 'in' && type" style="color: #409eff;">欢迎签退</span>
+      <span v-if="type !== 'out' && type" style="color: #409eff;">欢迎签到</span>
+    </div>
+    <br/>
     <el-select v-model="selectedCamera" placeholder="选择摄像头">
       <el-option v-for="device in devices" :key="device.deviceId" :label="device.label" :value="device.deviceId"/>
     </el-select>
-    <el-button type="primary" @click="startCamera">开启摄像头</el-button>
+    <el-button v-show="type" type="primary" @click="startCamera">开启摄像头</el-button>
+    <el-radio-group v-show="!type" v-model="type" size="small">
+      <el-radio-button label="in">签到</el-radio-button>
+      <el-radio-button label="out">签退</el-radio-button>
+    </el-radio-group>
     <el-button type="primary" @click="fullScreen">全屏</el-button>
     <div ref="videoContainer">
       <video id="video_CAM" ref="video" autoplay playsinline style=" object-fit: cover;"></video>
-      <span ref="tips"></span>
-      <br>
-      <span ref="end"></span>
     </div>
   </div>
 </template>
@@ -22,7 +28,9 @@ export default {
   data () {
     return {
       devices: [],
-      selectedCamera: null
+      selectedCamera: null,
+      type: false,
+      socket: false
     }
   },
   mounted () {
@@ -47,7 +55,7 @@ export default {
         // eslint-disable-next-line no-unused-vars
         const stream = await navigator.mediaDevices.getUserMedia(constraints)
         this.$refs.video.srcObject = stream
-        await this.startWS(constraints)
+        await this.startWS()
       } catch (error) {
         console.error('Error accessing camera:', error)
       }
@@ -64,17 +72,20 @@ export default {
           this.$refs.tips.innerText = jsonO.data
         } else {
           // 更新帧数据
-          this.$refs.video.src = 'data:image/jpeg;base64,' + jsonO.data
+          this.$refs.video.src = 'data:image/jpeg;base64,' + data
         }
       })
     },
-    async startWS (constraints) {
+    async startWS () {
       let status = 'wait'
       let sendSteamId
       console.log('ws://' + location.host + '/checkin')
       const socket = new WebSocket(getOpenCVApi() + '?session=' + new Date().getTime().toString())
       // 连接打开时发送一条消息
       socket.addEventListener('open', function (event) {
+        if (this.type) {
+          socket.send(this.type)
+        }
         socket.send('Get Server')
         socket.send('waiting server')
       })
@@ -84,10 +95,10 @@ export default {
         console.log('Message from server: ', event.data)
         if (status === 'wait') { // 等待分配opencv服务器
           if (event.data === 'waiting server') { // 稍等再次发送
-            // 休眠3秒
+            // 休眠
             setTimeout(() => {
               socket.send('waiting server')
-            }, 3000)
+            }, 6000)
           }
           if (event.data === 'server ready') { // 服务器准备就绪
             socket.send('start streaming')
@@ -132,15 +143,23 @@ export default {
             status = 'wait'
             socket.send('waiting server')
           }
-          const jsonO = JSON.parse(event.data)
-          if (jsonO.type === 'tips') {
-            this.$refs.tips.innerText = jsonO.data
+          // 组合数据包,将回传画面全屏展示
+          if (event.data.startsWith('data:image/jpeg;base64,')) {
+            const video = document.getElementById('video_CAM')
+            video.src = event.data
+            video.play()
           }
-          if (jsonO.type === 'name') {
-            this.$refs.end.innerText = jsonO.data
+          try {
+            const jsonO = JSON.parse(event.data)
+            if (jsonO.type === 'tips') {
+              this.$refs.tips.innerText = jsonO.data
+            }
+            if (jsonO.type === 'name') {
+              this.$refs.end.innerText = jsonO.data
+            }
+          } catch (error) {
+            console.log(error)
           }
-          // TODO
-          // 换成接受视频流并展示到窗口,最好全屏
         }
       })
 
