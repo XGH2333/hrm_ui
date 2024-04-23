@@ -190,12 +190,13 @@
         :header-cell-style="{background: '#eef1f6',color: '#606266',
         textAlign:'center',fontWeight:'bold',borderWidth:'3px'}"
         @selection-change="handleSelectionChange"
+        :group-by="item => item.deptName"
       >
         <el-table-column type="selection" width="50" align="center"/>
+        <el-table-column prop="deptName" label="部门" min-width="125" align="center"/>
         <el-table-column prop="code" label="工号" min-width="80" align="center"/>
         <el-table-column prop="name" label="姓名" min-width="80" align="center"/>
         <el-table-column prop="age" label="年龄" min-width="50" align="center"/>
-        <el-table-column prop="deptName" label="部门" min-width="125" align="center"/>
         <el-table-column prop="gender" label="性别" min-width="50" align="center"/>
         <el-table-column prop="phone" label="电话" min-width="125" align="center"/>
         <el-table-column prop="birthday" label="生日" min-width="125" align="center"/>
@@ -207,6 +208,7 @@
                        inactive-text="异常"
                        :active-value="1"
                        :inactive-value="0"
+                       v-if="scope.row.status !== 2"
                        @change="handleStatusChange(scope.row)"
             ></el-switch>
           </template>
@@ -214,7 +216,8 @@
         <el-table-column prop="address" label="地址" min-width="200" align="center"/>
         <el-table-column prop="remark" label="备注" min-width="200" align="center"/>
         <el-table-column label="操作" width="280" fixed="right" align="center">
-          <template slot-scope="scope">
+          <template slot-scope="scope"
+                    v-if="scope.row.status !== 2">
             <el-button size="mini" type="primary" @click="handleEdit(scope.row)"
             >编辑 <i class="el-icon-edit"></i
             ></el-button>
@@ -424,7 +427,7 @@ export default {
       })
       getList({
         current: this.table.pageConfig.current,
-        size: this.table.pageConfig.size
+        size: this.table.pageConfig.size,
       }, this.searchForm.formData).then(response => {
         if (response.code === 200) {
           this.table.tableData = response.data.list
