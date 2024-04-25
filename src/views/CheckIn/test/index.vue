@@ -16,6 +16,7 @@
     <el-button type="primary" @click="fullScreen">全屏</el-button>
     <div ref="videoContainer">
       <video id="video_CAM" ref="video" autoplay playsinline style=" object-fit: cover;"></video>
+      <video id="video_Return" autoplay playsinline style=" object-fit: cover;"></video>
     </div>
   </div>
 </template>
@@ -77,6 +78,7 @@ export default {
       })
     },
     async startWS () {
+      let videoTmp = ''
       let status = 'wait'
       let sendSteamId
       console.log('ws://' + location.host + '/checkin')
@@ -92,7 +94,6 @@ export default {
 
       // 接收到消息时在控制台打印
       socket.addEventListener('message', function (event) {
-        console.log('Message from server: ', event.data)
         if (status === 'wait') { // 等待分配opencv服务器
           if (event.data === 'waiting server') { // 稍等再次发送
             // 休眠
@@ -109,7 +110,7 @@ export default {
               if (status === 'streaming') {
                 sendVideoFrame(document.getElementById('video_CAM'))
               }
-            }, 100)
+            }, 50)
 
             // eslint-disable-next-line no-inner-declarations,no-unused-vars
             function sendVideoFrame (video) {
@@ -143,22 +144,14 @@ export default {
             status = 'wait'
             socket.send('waiting server')
           }
-          // 组合数据包,将回传画面全屏展示
-          if (event.data.startsWith('data:image/jpeg;base64,')) {
-            const video = document.getElementById('video_CAM')
-            video.src = event.data
-            video.play()
-          }
-          try {
-            const jsonO = JSON.parse(event.data)
-            if (jsonO.type === 'tips') {
-              this.$refs.tips.innerText = jsonO.data
-            }
-            if (jsonO.type === 'name') {
-              this.$refs.end.innerText = jsonO.data
-            }
-          } catch (error) {
-            console.log(error)
+          const tmp = event.data.split(',')
+          videoTmp += tmp[0]
+          if (videoTmp.length >= tmp[1]) {
+            // 将收到的base64编码图像显示到video上
+            const videoCAM = document.getElementById('video_Return')
+            videoCAM.src = 'data:image/jpeg;base64,' + videoTmp
+            videoCAM.play()
+            videoTmp = ''
           }
         }
       })
