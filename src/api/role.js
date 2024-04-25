@@ -59,12 +59,12 @@ export const getAll = () => {
 
 // 数据导入
 export const getImportApi = () => {
-  return 'http://localhost:' + process.env.VUE_APP_PORT + url + '/import'
+  return 'http://xghwy.xghwy.top:' + process.env.VUE_APP_PORT + url + '/import'
 }
 
 // 数据导出
 export const getExportApi = () => {
-  return 'http://localhost:' + process.env.VUE_APP_PORT + url + '/export'
+  return 'http://xghwy.xghwy.top:' + process.env.VUE_APP_PORT + url + '/export'
 }
 
 // 为角色设置菜单

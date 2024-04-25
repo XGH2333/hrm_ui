@@ -73,15 +73,15 @@ export const setAttendance = (data) => {
 // 得到一条数据
 // 数据导入
 export const getImportApi = () => {
-  return 'http://localhost:' + process.env.VUE_APP_PORT + url + '/import'
+  return 'http://xghwy.xghwy.top:' + process.env.VUE_APP_PORT + url + '/import'
 }
 
 // 数据导出
 export const getExportApi = (month) => {
-  return 'http://localhost:' + process.env.VUE_APP_PORT + url + '/export/' + month
+  return 'http://xghwy.xghwy.top:' + process.env.VUE_APP_PORT + url + '/export/' + month
 }
 
 // python端接口地址
 export const getOpenCVApi = () => {
-  return 'ws://localhost:8080/dev/opencv/client'
+  return 'ws://xghwy.xghwy.top:8080/dev/opencv/client'
 }
