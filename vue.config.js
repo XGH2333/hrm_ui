@@ -7,6 +7,7 @@ module.exports = {
         target: 'http://localhost:' + process.env.VUE_APP_PORT, pathRewrite: { '^/dev': '' }, changeOrigin: true // 用于控制请求头中的host值
       }
     },
-    disableHostCheck: true
+    disableHostCheck: true,
+    https: true
   }
 }
